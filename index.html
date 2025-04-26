@@ -14,6 +14,8 @@
     .option-btn { display: block; margin: 5px 0; padding: 8px; }
     .answer-list { margin-top: 1rem; }
     .answer-list li { margin-bottom: 5px; }
+    .result-correct { color: green; }
+    .result-incorrect { color: red; }
   </style>
 </head>
 <body>
@@ -31,7 +33,8 @@
     let originalWords = [];
     let missingIndices = [];
     let testSentences = [];
-    let score = 0;
+    let correctAnswers = [];
+    let userAnswers = [];
 
     function generateExercise() {
       clearAll();
@@ -104,31 +107,32 @@
       const text = document.getElementById('inputText').value.trim();
       if (!text) return;
 
-      const sentences = text.split(/[.!?]\s*/).filter(s => s.length > 0);
+      const sentences = text.split(/[.!?]\s*/).filter(s => s.split(' ').length > 3);
       testSentences = [];
-      while (testSentences.length < Math.min(5, sentences.length)) {
-        const rand = sentences[Math.floor(Math.random() * sentences.length)];
-        if (!testSentences.includes(rand)) testSentences.push(rand);
-      }
+      correctAnswers = [];
+      userAnswers = [];
 
-      score = 0;
-      runMultipleChoiceTest();
-    }
-
-    function runMultipleChoiceTest() {
-      const container = document.getElementById('test');
-      container.innerHTML = '';
-      testSentences.forEach((sentence, q) => {
-        const words = sentence.split(/(\s+)/).filter(w => w.trim().length > 0);
+      while (testSentences.length < 5) {
+        const randSentence = sentences[Math.floor(Math.random() * sentences.length)];
+        const words = randSentence.split(/(\s+)/).filter(w => w.trim().length > 0);
         const missingIndex = Math.floor(Math.random() * words.length);
         const correct = words[missingIndex];
         words[missingIndex] = '_____';
         const question = words.join(' ');
+        testSentences.push({ question, correct });
+      }
 
+      renderTest();
+    }
+
+    function renderTest() {
+      const container = document.getElementById('test');
+      container.innerHTML = '';
+      testSentences.forEach((item, index) => {
         const div = document.createElement('div');
-        div.innerHTML = `<b>${q+1}. Kérdés:</b> ${question}`;
+        div.innerHTML = `<b>${index+1}. Kérdés:</b> ${item.question}`;
 
-        const options = [correct];
+        const options = [item.correct];
         while (options.length < 4) {
           const randomWord = originalWords[Math.floor(Math.random() * originalWords.length)].trim();
           if (randomWord && !options.includes(randomWord) && randomWord.match(/^\w+$/)) {
@@ -142,28 +146,53 @@
           btn.className = 'option-btn';
           btn.textContent = opt;
           btn.onclick = () => {
-            if (opt === correct) score++;
-            if (q === testSentences.length - 1) {
-              showResult(score, testSentences.length);
-            }
-            btn.disabled = true;
+            userAnswers[index] = opt;
+            btn.parentNode.querySelectorAll('button').forEach(b => b.disabled = true);
           };
           div.appendChild(btn);
         });
 
         container.appendChild(div);
       });
+
+      const checkBtn = document.createElement('button');
+      checkBtn.innerText = 'Ellenőrzés';
+      checkBtn.style.marginTop = '1rem';
+      checkBtn.onclick = checkTestResults;
+      container.appendChild(document.createElement('br'));
+      container.appendChild(checkBtn);
     }
 
-    function showResult(correct, total) {
-      const percent = Math.round((correct / total) * 100);
+    function checkTestResults() {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = '';
+
+      let correctCount = 0;
+      const list = document.createElement('ul');
+      list.className = 'answer-list';
+
+      testSentences.forEach((item, index) => {
+        const li = document.createElement('li');
+        if (userAnswers[index] === item.correct) {
+          li.innerHTML = `✅ ${index+1}. helyes válasz: ${item.correct}`;
+          li.className = 'result-correct';
+          correctCount++;
+        } else {
+          li.innerHTML = `❌ ${index+1}. helytelen válasz. Helyes: ${item.correct}`;
+          li.className = 'result-incorrect';
+        }
+        list.appendChild(li);
+      });
+
+      const percent = Math.round((correctCount / testSentences.length) * 100);
       let msg = '';
       if (percent >= 90) msg = 'Kiváló!';
       else if (percent >= 70) msg = 'Nagyon jó, kis gyakorlással hibátlan lesz!';
       else if (percent >= 50) msg = 'Még gyakorolj egy kicsit.';
       else msg = 'Ne add fel, menni fog!';
-      document.getElementById('result').innerHTML = `Pontszám: ${correct}/${total} (${percent}%)<br>${msg}`;
-      document.getElementById('test').innerHTML = '';
+
+      resultDiv.innerHTML = `Pontszám: ${correctCount}/${testSentences.length} (${percent}%)<br>${msg}`;
+      resultDiv.appendChild(list);
     }
 
     function clearAll() {
