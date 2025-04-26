@@ -11,6 +11,10 @@
     button { padding: 10px 20px; font-size: 16px; margin-bottom: 1rem; }
     .input-word { width: auto; min-width: 50px; padding: 4px; margin: 0 2px; }
     .word-container { margin-top: 1rem; }
+    .correct { background-color: #c8e6c9; }
+    .incorrect { background-color: #ffcdd2; }
+    .answer-list { margin-top: 1rem; }
+    .answer-list li { margin-bottom: 5px; }
   </style>
 </head>
 <body>
@@ -29,6 +33,8 @@
   <script>
     const ignoreWords = ['a', 'az', 'azt', 'és', 'hogy', 'mert', 'vagy', 'avagy', 'azonban', 'ám', 'csakhogy', 'de', 'ellenben', 'hanem', 'maga', 'mégis', 'mégsem', 'míg', 'mindamellett', 'pedig', 'viszont'];
     const ignorePatterns = [/^\(?\d+\)?[\.]?$/, /^[§.,!?;:]$/];
+    let originalWords = [];
+    let missingIndices = [];
 
     function isIgnored(word) {
       const lower = word.toLowerCase();
@@ -46,13 +52,14 @@
       }
 
       const words = text.split(/(\s+)/);
+      originalWords = [...words];
       const indexes = [];
 
       for (let i = 0; i < words.length; i += 2) {
         if (words[i].match(/\w/) && !isIgnored(words[i])) indexes.push(i);
       }
 
-      let missingIndices = [];
+      missingIndices = [];
       while (missingIndices.length < Math.min(count, indexes.length)) {
         const rand = indexes[Math.floor(Math.random() * indexes.length)];
         if (!missingIndices.includes(rand)) missingIndices.push(rand);
@@ -64,6 +71,7 @@
           const input = document.createElement('input');
           input.type = 'text';
           input.className = 'input-word';
+          input.setAttribute('data-index', i);
           output.appendChild(input);
         } else {
           const span = document.createElement('span');
@@ -71,6 +79,37 @@
           output.appendChild(span);
         }
       });
+
+      const checkBtn = document.createElement('button');
+      checkBtn.innerText = 'Ellenőrzés';
+      checkBtn.onclick = checkAnswers;
+      output.appendChild(document.createElement('br'));
+      output.appendChild(checkBtn);
+    }
+
+    function checkAnswers() {
+      const output = document.getElementById('practiceArea');
+      const inputs = output.querySelectorAll('input.input-word');
+      const list = document.createElement('ul');
+      list.className = 'answer-list';
+
+      inputs.forEach(input => {
+        const index = parseInt(input.getAttribute('data-index'));
+        const correct = originalWords[index];
+        const li = document.createElement('li');
+        li.textContent = `Helyes szó: ${correct}`;
+        list.appendChild(li);
+
+        if (input.value.trim() === correct) {
+          input.classList.remove('incorrect');
+          input.classList.add('correct');
+        } else {
+          input.classList.remove('correct');
+          input.classList.add('incorrect');
+        }
+      });
+
+      output.appendChild(list);
     }
   </script>
 </body>
