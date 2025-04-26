@@ -6,111 +6,104 @@
   <title>MemorySprint</title>
   <style>
     body { font-family: sans-serif; padding: 1rem; }
-    textarea { width: 100%; height: 150px; margin-bottom: 1rem; }
-    input[type="number"] { width: 60px; margin-bottom: 1rem; }
-    button { padding: 10px 20px; font-size: 16px; margin-bottom: 1rem; }
-    .input-word { width: auto; min-width: 50px; padding: 4px; margin: 0 2px; }
-    .word-container { margin-top: 1rem; }
-    .correct { background-color: #c8e6c9; }
-    .incorrect { background-color: #ffcdd2; }
+    textarea, input[type="number"] { width: 100%; margin-bottom: 1rem; }
+    button { padding: 10px; margin-right: 10px; }
+    .question { margin-top: 1rem; }
     .answer-list { margin-top: 1rem; }
-    .answer-list li { margin-bottom: 5px; }
   </style>
 </head>
 <body>
-  <h1>MemorySprint működik! 🎉</h1>
-  <p>Illeszd be ide a szöveget, add meg hány szót szeretnél kihagyni, majd indítsd a gyakorlást:</p>
+  <h1>MemorySprint - Teszt funkció</h1>
+  <textarea id="inputText" placeholder="Illeszd be a szöveget..."></textarea>
+  <input type="number" id="missingCount" placeholder="Hiányzó szavak száma" value="5" min="1">
+  <div>
+    <button onclick="startPractice()">Gyakorlás indítása</button>
+    <button onclick="startTest()">Teszt indítása</button>
+  </div>
+  <div id="practiceArea"></div>
+  <div id="testArea"></div>
 
-  <textarea id="inputText" placeholder="Ide írd vagy illeszd be a tanulandó szöveget..."></textarea><br>
+<script>
+let originalWords = [];
+let testQuestions = [];
+let userAnswers = [];
 
-  <label for="missingCount">Hiányzó szavak száma:</label>
-  <input type="number" id="missingCount" min="1" value="5"><br>
+function startPractice() {
+  document.getElementById('practiceArea').innerHTML = "Még nem aktiváltuk újra a gyakorlást.";
+}
 
-  <button onclick="startPractice()">Gyakorlás indítása</button>
+function startTest() {
+  const text = document.getElementById('inputText').value;
+  const sentences = text.match(/[^.!?]+[.!?]/g) || [];
+  testQuestions = [];
+  userAnswers = [];
+  
+  while (testQuestions.length < 5) {
+    const sent = sentences[Math.floor(Math.random() * sentences.length)] || text;
+    const words = sent.split(/\s+/).filter(w => w.length > 2);
+    if (words.length === 0) continue;
+    const missingWord = words[Math.floor(Math.random() * words.length)];
+    const question = sent.replace(missingWord, "_____");
+    testQuestions.push({question, correct: missingWord});
+  }
 
-  <div id="practiceArea" class="word-container"></div>
+  renderTest();
+}
 
-  <script>
-    const ignoreWords = ['a', 'az', 'azt', 'és', 'hogy', 'mert', 'vagy', 'avagy', 'azonban', 'ám', 'csakhogy', 'de', 'ellenben', 'hanem', 'maga', 'mégis', 'mégsem', 'míg', 'mindamellett', 'pedig', 'viszont'];
-    const ignorePatterns = [/^\(?\d+\)?[\.]?$/, /^[§.,!?;:]$/];
-    let originalWords = [];
-    let missingIndices = [];
-
-    function isIgnored(word) {
-      const lower = word.toLowerCase();
-      return ignoreWords.includes(lower) || ignorePatterns.some(pattern => pattern.test(word));
+function renderTest() {
+  const area = document.getElementById('testArea');
+  area.innerHTML = "";
+  testQuestions.forEach((q, idx) => {
+    const div = document.createElement('div');
+    div.className = "question";
+    div.innerHTML = `<b>${idx+1}.</b> ${q.question}<br>`;
+    
+    const options = [q.correct];
+    while (options.length < 4) {
+      const rand = Math.random().toString(36).substring(2, 7);
+      if (!options.includes(rand)) options.push(rand);
     }
+    options.sort(() => Math.random() - 0.5);
+    
+    options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.textContent = opt;
+      btn.onclick = () => {
+        userAnswers[idx] = opt;
+        btn.disabled = true;
+      };
+      div.appendChild(btn);
+    });
+    area.appendChild(div);
+  });
 
-    function startPractice() {
-      const text = document.getElementById('inputText').value.trim();
-      const count = parseInt(document.getElementById('missingCount').value);
-      const output = document.getElementById('practiceArea');
+  const checkBtn = document.createElement('button');
+  checkBtn.textContent = "Teszt ellenőrzése";
+  checkBtn.onclick = checkTest;
+  area.appendChild(checkBtn);
+}
 
-      if (!text) {
-        output.innerHTML = "<p style='color:red;'>Kérlek, adj meg egy szöveget!</p>";
-        return;
-      }
-
-      const words = text.split(/(\s+)/);
-      originalWords = [...words];
-      const indexes = [];
-
-      for (let i = 0; i < words.length; i += 2) {
-        if (words[i].match(/\w/) && !isIgnored(words[i])) indexes.push(i);
-      }
-
-      missingIndices = [];
-      while (missingIndices.length < Math.min(count, indexes.length)) {
-        const rand = indexes[Math.floor(Math.random() * indexes.length)];
-        if (!missingIndices.includes(rand)) missingIndices.push(rand);
-      }
-
-      output.innerHTML = '';
-      words.forEach((word, i) => {
-        if (missingIndices.includes(i)) {
-          const input = document.createElement('input');
-          input.type = 'text';
-          input.className = 'input-word';
-          input.setAttribute('data-index', i);
-          output.appendChild(input);
-        } else {
-          const span = document.createElement('span');
-          span.textContent = word;
-          output.appendChild(span);
-        }
-      });
-
-      const checkBtn = document.createElement('button');
-      checkBtn.innerText = 'Ellenőrzés';
-      checkBtn.onclick = checkAnswers;
-      output.appendChild(document.createElement('br'));
-      output.appendChild(checkBtn);
+function checkTest() {
+  const area = document.getElementById('testArea');
+  let correctCount = 0;
+  const list = document.createElement('ul');
+  list.className = 'answer-list';
+  
+  testQuestions.forEach((q, idx) => {
+    const li = document.createElement('li');
+    if (userAnswers[idx] === q.correct) {
+      li.textContent = `✅ ${idx+1}. helyes: ${q.correct}`;
+      correctCount++;
+    } else {
+      li.textContent = `❌ ${idx+1}. helytelen, helyes: ${q.correct}`;
     }
+    list.appendChild(li);
+  });
 
-    function checkAnswers() {
-      const output = document.getElementById('practiceArea');
-      const inputs = output.querySelectorAll('input.input-word');
-      const list = document.createElement('ul');
-      list.className = 'answer-list';
-
-      inputs.forEach(input => {
-        const index = parseInt(input.getAttribute('data-index'));
-        const correct = originalWords[index];
-        const li = document.createElement('li');
-        li.textContent = `Helyes szó: ${correct}`;
-        list.appendChild(li);
-
-        if (input.value.trim() === correct) {
-          input.classList.remove('incorrect');
-          input.classList.add('correct');
-        } else {
-          input.classList.remove('correct');
-          input.classList.add('incorrect');
-        }
-      });
-
-      output.appendChild(list);
-    }
-  </script>
+  const score = Math.round((correctCount / testQuestions.length) * 100);
+  area.innerHTML = `<h3>Eredmény: ${correctCount}/${testQuestions.length} (${score}%)</h3>`;
+  area.appendChild(list);
+}
+</script>
 </body>
 </html>
