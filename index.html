@@ -29,7 +29,176 @@
   <div id="result" style="margin-top: 1rem; font-weight: bold;"></div>
 
   <script>
-    // (a meglévő script változatlan marad)
+    let originalWords = [];
+    let missingIndices = [];
+    let testWords = [];
+    let currentTestType = '';
+    let score = 0;
+
+    function generateExercise() {
+      clearAll();
+      const text = document.getElementById('inputText').value.trim();
+      const count = parseInt(document.getElementById('missingCount').value);
+
+      if (!text) return;
+
+      const words = text.split(/(\s+)/);
+      originalWords = [...words];
+      missingIndices = [];
+      const indexes = [];
+      for (let i = 0; i < words.length; i += 2) {
+        if (words[i].match(/\w/)) indexes.push(i);
+      }
+
+      while (missingIndices.length < Math.min(count, indexes.length)) {
+        const rand = indexes[Math.floor(Math.random() * indexes.length)];
+        if (!missingIndices.includes(rand)) missingIndices.push(rand);
+      }
+
+      const container = document.getElementById('exercise');
+      container.innerHTML = '';
+
+      words.forEach((word, i) => {
+        if (missingIndices.includes(i)) {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'input-word';
+          input.setAttribute('data-index', i);
+          container.appendChild(input);
+        } else {
+          const span = document.createElement('span');
+          span.textContent = word;
+          container.appendChild(span);
+        }
+      });
+    }
+
+    function checkAnswers() {
+      const inputs = document.querySelectorAll('input.input-word');
+      inputs.forEach(input => {
+        const index = parseInt(input.getAttribute('data-index'));
+        const correct = originalWords[index];
+        if (input.value.trim() === correct) {
+          input.classList.remove('incorrect');
+          input.classList.add('correct');
+        } else {
+          input.classList.remove('correct');
+          input.classList.add('incorrect');
+        }
+      });
+    }
+
+    function startTest() {
+      clearAll();
+      const text = document.getElementById('inputText').value.trim();
+      const count = parseInt(document.getElementById('missingCount').value);
+
+      if (!text) return;
+
+      const type = prompt('Teszt típus (1: Hiányzó szó pótlása, 2: Többszörös választás)? Írj 1-et vagy 2-t!');
+      if (type !== '1' && type !== '2') return;
+      currentTestType = type;
+
+      const words = text.split(/(\s+)/);
+      originalWords = [...words];
+      testWords = [];
+      const indexes = [];
+      for (let i = 0; i < words.length; i += 2) {
+        if (words[i].match(/\w/)) indexes.push(i);
+      }
+
+      while (testWords.length < Math.min(count, indexes.length)) {
+        const rand = indexes[Math.floor(Math.random() * indexes.length)];
+        if (!testWords.includes(rand)) testWords.push(rand);
+      }
+
+      score = 0;
+      if (currentTestType === '1') {
+        runFillInTest();
+      } else {
+        runMultipleChoiceTest();
+      }
+    }
+
+    function runFillInTest() {
+      const container = document.getElementById('test');
+      container.innerHTML = '';
+      testWords.forEach((index, q) => {
+        const div = document.createElement('div');
+        div.innerHTML = `<b>${q+1}. Kérdés:</b> ... ${originalWords[index-2] || ''} _ _ _ ${originalWords[index+2] || ''}`;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'input-word';
+        input.setAttribute('data-index', index);
+        div.appendChild(document.createElement('br'));
+        div.appendChild(input);
+        container.appendChild(div);
+      });
+      const btn = document.createElement('button');
+      btn.innerText = 'Ellenőrzés';
+      btn.onclick = checkFillInTest;
+      container.appendChild(btn);
+    }
+
+    function checkFillInTest() {
+      let correct = 0;
+      const inputs = document.querySelectorAll('#test input.input-word');
+      inputs.forEach(input => {
+        const index = parseInt(input.getAttribute('data-index'));
+        if (input.value.trim() === originalWords[index]) {
+          correct++;
+        }
+      });
+      showResult(correct, inputs.length);
+    }
+
+    function runMultipleChoiceTest() {
+      const container = document.getElementById('test');
+      container.innerHTML = '';
+      testWords.forEach((index, q) => {
+        const div = document.createElement('div');
+        div.innerHTML = `<b>${q+1}. Kérdés:</b> Válaszd ki a hiányzó szót!`;
+        const correct = originalWords[index];
+        const options = [correct];
+        while (options.length < 4) {
+          const randomWord = originalWords[Math.floor(Math.random() * originalWords.length)].trim();
+          if (randomWord && !options.includes(randomWord) && randomWord.match(/^\w+$/)) {
+            options.push(randomWord);
+          }
+        }
+        options.sort(() => Math.random() - 0.5);
+        options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'option-btn';
+          btn.textContent = opt;
+          btn.onclick = () => {
+            if (opt === correct) score++;
+            if (q === testWords.length - 1) {
+              showResult(score, testWords.length);
+            }
+          };
+          div.appendChild(btn);
+        });
+        container.appendChild(div);
+      });
+    }
+
+    function showResult(correct, total) {
+      const percent = Math.round((correct / total) * 100);
+      let msg = '';
+      if (percent >= 90) msg = 'Kiváló!';
+      else if (percent >= 70) msg = 'Nagyon jó, kis gyakorlással hibátlan lesz!';
+      else if (percent >= 50) msg = 'Még gyakorolj egy kicsit.';
+      else msg = 'Ne add fel, menni fog!';
+      document.getElementById('result').innerHTML = `Pontszám: ${correct}/${total} (${percent}%)<br>${msg}`;
+      document.getElementById('test').innerHTML = '';
+    }
+
+    function clearAll() {
+      document.getElementById('exercise').innerHTML = '';
+      document.getElementById('test').innerHTML = '';
+      document.getElementById('result').innerHTML = '';
+    }
   </script>
 </body>
 </html>
