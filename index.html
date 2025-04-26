@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MemorySprint</title>
+  <title>MemorySprint - Teszt funkció</title>
   <style>
     body { font-family: sans-serif; padding: 1rem; }
-    textarea, input[type="number"] { width: 100%; margin-bottom: 1rem; }
-    button { padding: 10px; margin-right: 10px; }
+    textarea { width: 100%; height: 150px; margin-bottom: 1rem; }
+    input[type="number"] { width: 100%; margin-bottom: 1rem; }
+    button { padding: 10px; margin: 5px 5px 5px 0; }
     .question { margin-top: 1rem; }
     .answer-list { margin-top: 1rem; }
   </style>
@@ -24,6 +25,8 @@
   <div id="testArea"></div>
 
 <script>
+const hungarianWords = ['szabály', 'tanulás', 'jog', 'feladat', 'szöveg', 'rendszer', 'kötelezettség', 'munka', 'értelem', 'vizsga', 'tudás', 'felkészülés', 'támogatás', 'siker', 'gyakorlat'];
+
 let originalWords = [];
 let testQuestions = [];
 let userAnswers = [];
@@ -60,8 +63,11 @@ function renderTest() {
     
     const options = [q.correct];
     while (options.length < 4) {
-      const rand = Math.random().toString(36).substring(2, 7);
-      if (!options.includes(rand)) options.push(rand);
+      const candidates = [...originalWords, ...hungarianWords];
+      const randomWord = candidates[Math.floor(Math.random() * candidates.length)];
+      if (randomWord && !options.includes(randomWord) && Math.abs(randomWord.length - q.correct.length) <= 2) {
+        options.push(randomWord);
+      }
     }
     options.sort(() => Math.random() - 0.5);
     
@@ -70,7 +76,7 @@ function renderTest() {
       btn.textContent = opt;
       btn.onclick = () => {
         userAnswers[idx] = opt;
-        btn.disabled = true;
+        btn.parentNode.querySelectorAll('button').forEach(b => b.disabled = true);
       };
       div.appendChild(btn);
     });
