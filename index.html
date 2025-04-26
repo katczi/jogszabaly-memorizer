@@ -39,9 +39,7 @@
       clearAll();
       const text = document.getElementById('inputText').value.trim();
       const count = parseInt(document.getElementById('missingCount').value);
-
       if (!text) return;
-
       const words = text.split(/(\s+)/);
       originalWords = [...words];
       missingIndices = [];
@@ -49,15 +47,12 @@
       for (let i = 0; i < words.length; i += 2) {
         if (words[i].match(/\w/)) indexes.push(i);
       }
-
       while (missingIndices.length < Math.min(count, indexes.length)) {
         const rand = indexes[Math.floor(Math.random() * indexes.length)];
         if (!missingIndices.includes(rand)) missingIndices.push(rand);
       }
-
       const container = document.getElementById('exercise');
       container.innerHTML = '';
-
       words.forEach((word, i) => {
         if (missingIndices.includes(i)) {
           const input = document.createElement('input');
@@ -71,6 +66,11 @@
           container.appendChild(span);
         }
       });
+      const checkBtn = document.createElement('button');
+      checkBtn.innerText = 'Ellenőrzés';
+      checkBtn.onclick = checkAnswers;
+      container.appendChild(document.createElement('br'));
+      container.appendChild(checkBtn);
     }
 
     function checkAnswers() {
@@ -92,13 +92,10 @@
       clearAll();
       const text = document.getElementById('inputText').value.trim();
       const count = parseInt(document.getElementById('missingCount').value);
-
       if (!text) return;
-
       const type = prompt('Teszt típus (1: Hiányzó szó pótlása, 2: Többszörös választás)? Írj 1-et vagy 2-t!');
       if (type !== '1' && type !== '2') return;
       currentTestType = type;
-
       const words = text.split(/(\s+)/);
       originalWords = [...words];
       testWords = [];
@@ -106,12 +103,10 @@
       for (let i = 0; i < words.length; i += 2) {
         if (words[i].match(/\w/)) indexes.push(i);
       }
-
       while (testWords.length < Math.min(count, indexes.length)) {
         const rand = indexes[Math.floor(Math.random() * indexes.length)];
         if (!testWords.includes(rand)) testWords.push(rand);
       }
-
       score = 0;
       if (currentTestType === '1') {
         runFillInTest();
