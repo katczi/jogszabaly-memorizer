@@ -4,12 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MemorySprint</title>
-  <script>
-    const extraWords = ['alma', 'kutya', 'tavasz', 'iskola', 'szabadság', 'tanulás', 'alkotás', 'érzelem', 'város', 'ország', 'család', 'barátság', 'szülő', 'gyermek', 'tudás', 'szellem', 'lélek', 'gondolat', 'hit', 'szó', 'közösség', 'képesség', 'akarat', 'szorgalom', 'jellem', 'szabály', 'bizalom', 'tisztelet', 'kedvesség', 'siker'];
-  </script>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    textarea { width: 100%; height: 150px; margin-bottom: 1rem; }
+    button { padding: 10px 20px; font-size: 16px; }
+  </style>
 </head>
 <body>
   <h1>MemorySprint működik! 🎉</h1>
-  <p>Ez a verzió már biztosan betölt GitHub Pages-en. További funkciók hamarosan újraépülnek!</p>
+  <p>Illeszd be ide a szöveget, majd indítsd a gyakorlást:</p>
+
+  <textarea id="inputText" placeholder="Ide írd vagy illeszd be a tanulandó szöveget..."></textarea><br>
+
+  <button onclick="startPractice()">Gyakorlás indítása</button>
+
+  <div id="practiceArea" style="margin-top: 2rem;"></div>
+
+  <script>
+    function startPractice() {
+      const text = document.getElementById('inputText').value.trim();
+      const output = document.getElementById('practiceArea');
+      if (!text) {
+        output.innerHTML = "<p style='color:red;'>Kérlek, adj meg egy szöveget!</p>";
+        return;
+      }
+      output.innerHTML = "<p style='color:green;'>Szuper! A szöveget megkaptuk. A feladatgenerálás hamarosan következik!</p>";
+    }
+  </script>
 </body>
 </html>
