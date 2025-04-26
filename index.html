@@ -3,47 +3,127 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MemorySprint - Teszt funkció</title>
+  <title>MemorySprint</title>
   <style>
     body { font-family: sans-serif; padding: 1rem; }
-    textarea { width: 100%; height: 150px; margin-bottom: 1rem; }
-    input[type="number"] { width: 100%; margin-bottom: 1rem; }
-    button { padding: 10px; margin: 5px 5px 5px 0; }
+    textarea, input[type="number"] { width: 100%; margin-bottom: 1rem; }
+    button { padding: 10px; margin: 5px; }
+    .input-word { width: auto; min-width: 60px; padding: 4px; margin: 0 2px; }
     .question { margin-top: 1rem; }
     .answer-list { margin-top: 1rem; }
+    .correct { background-color: #c8e6c9; }
+    .incorrect { background-color: #ffcdd2; }
   </style>
 </head>
 <body>
-  <h1>MemorySprint - Teszt funkció</h1>
-  <textarea id="inputText" placeholder="Illeszd be a szöveget..."></textarea>
+  <h1>MemorySprint</h1>
+
+  <textarea id="inputText" placeholder="Illeszd be ide a szöveget..."></textarea>
   <input type="number" id="missingCount" placeholder="Hiányzó szavak száma" value="5" min="1">
   <div>
     <button onclick="startPractice()">Gyakorlás indítása</button>
     <button onclick="startTest()">Teszt indítása</button>
+    <button onclick="resetAll()">Vissza a főmenübe</button>
   </div>
+
   <div id="practiceArea"></div>
   <div id="testArea"></div>
 
 <script>
-const hungarianWords = ['szabály', 'tanulás', 'jog', 'feladat', 'szöveg', 'rendszer', 'kötelezettség', 'munka', 'értelem', 'vizsga', 'tudás', 'felkészülés', 'támogatás', 'siker', 'gyakorlat'];
+const hungarianWords = ['tanulás', 'memória', 'szabály', 'vizsga', 'tudás', 'jogszabály', 'gyakorlat', 'képzés', 'szorgalom', 'eredmény', 'feladat', 'készség', 'fejlődés', 'oktatás'];
 
 let originalWords = [];
+let missingIndices = [];
 let testQuestions = [];
 let userAnswers = [];
 
+function resetAll() {
+  document.getElementById('practiceArea').innerHTML = "";
+  document.getElementById('testArea').innerHTML = "";
+}
+
 function startPractice() {
-  document.getElementById('practiceArea').innerHTML = "Még nem aktiváltuk újra a gyakorlást.";
+  resetAll();
+  const text = document.getElementById('inputText').value.trim();
+  const count = parseInt(document.getElementById('missingCount').value);
+  const output = document.getElementById('practiceArea');
+
+  if (!text) {
+    output.innerHTML = "<p style='color:red;'>Kérlek, adj meg szöveget!</p>";
+    return;
+  }
+
+  const words = text.split(/(\s+)/);
+  originalWords = [...words];
+  const indexes = [];
+
+  for (let i = 0; i < words.length; i += 2) {
+    if (words[i].match(/\w/) && !words[i].match(/^\(\d+\)$/)) indexes.push(i);
+  }
+
+  missingIndices = [];
+  while (missingIndices.length < Math.min(count, indexes.length)) {
+    const rand = indexes[Math.floor(Math.random() * indexes.length)];
+    if (!missingIndices.includes(rand)) missingIndices.push(rand);
+  }
+
+  output.innerHTML = '';
+  words.forEach((word, i) => {
+    if (missingIndices.includes(i)) {
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'input-word';
+      input.setAttribute('data-index', i);
+      output.appendChild(input);
+    } else {
+      const span = document.createElement('span');
+      span.textContent = word;
+      output.appendChild(span);
+    }
+  });
+
+  const checkBtn = document.createElement('button');
+  checkBtn.innerText = 'Ellenőrzés';
+  checkBtn.onclick = checkAnswers;
+  output.appendChild(document.createElement('br'));
+  output.appendChild(checkBtn);
+}
+
+function checkAnswers() {
+  const output = document.getElementById('practiceArea');
+  const inputs = output.querySelectorAll('input.input-word');
+  const list = document.createElement('ul');
+  list.className = 'answer-list';
+
+  inputs.forEach(input => {
+    const index = parseInt(input.getAttribute('data-index'));
+    const correct = originalWords[index];
+    const li = document.createElement('li');
+    li.textContent = `Helyes szó: ${correct}`;
+    list.appendChild(li);
+
+    if (input.value.trim() === correct) {
+      input.classList.remove('incorrect');
+      input.classList.add('correct');
+    } else {
+      input.classList.remove('correct');
+      input.classList.add('incorrect');
+    }
+  });
+
+  output.appendChild(list);
 }
 
 function startTest() {
-  const text = document.getElementById('inputText').value;
+  resetAll();
+  const text = document.getElementById('inputText').value.trim();
   const sentences = text.match(/[^.!?]+[.!?]/g) || [];
   testQuestions = [];
   userAnswers = [];
-  
+
   while (testQuestions.length < 5) {
     const sent = sentences[Math.floor(Math.random() * sentences.length)] || text;
-    const words = sent.split(/\s+/).filter(w => w.length > 2);
+    const words = sent.split(/\s+/).filter(w => w.length > 2 && !w.match(/^\(\d+\)$/));
     if (words.length === 0) continue;
     const missingWord = words[Math.floor(Math.random() * words.length)];
     const question = sent.replace(missingWord, "_____");
@@ -60,17 +140,16 @@ function renderTest() {
     const div = document.createElement('div');
     div.className = "question";
     div.innerHTML = `<b>${idx+1}.</b> ${q.question}<br>`;
-    
+
     const options = [q.correct];
     while (options.length < 4) {
-      const candidates = [...originalWords, ...hungarianWords];
-      const randomWord = candidates[Math.floor(Math.random() * candidates.length)];
-      if (randomWord && !options.includes(randomWord) && Math.abs(randomWord.length - q.correct.length) <= 2) {
+      const randomWord = hungarianWords[Math.floor(Math.random() * hungarianWords.length)];
+      if (!options.includes(randomWord) && Math.abs(randomWord.length - q.correct.length) <= 2) {
         options.push(randomWord);
       }
     }
     options.sort(() => Math.random() - 0.5);
-    
+
     options.forEach(opt => {
       const btn = document.createElement('button');
       btn.textContent = opt;
@@ -94,14 +173,16 @@ function checkTest() {
   let correctCount = 0;
   const list = document.createElement('ul');
   list.className = 'answer-list';
-  
+
   testQuestions.forEach((q, idx) => {
     const li = document.createElement('li');
     if (userAnswers[idx] === q.correct) {
       li.textContent = `✅ ${idx+1}. helyes: ${q.correct}`;
+      li.className = 'correct';
       correctCount++;
     } else {
       li.textContent = `❌ ${idx+1}. helytelen, helyes: ${q.correct}`;
+      li.className = 'incorrect';
     }
     list.appendChild(li);
   });
@@ -111,5 +192,6 @@ function checkTest() {
   area.appendChild(list);
 }
 </script>
+
 </body>
 </html>
