@@ -30,6 +30,8 @@
   <div id="result" style="margin-top: 1rem; font-weight: bold;"></div>
 
   <script>
+    const ignoreWords = ['a', 'az', 'azt', 'és', 'hogy', 'mert', 'vagy', 'avagy', 'azonban', 'ám', 'csakhogy', 'de', 'ellenben', 'hanem', 'maga', 'mégis', 'mégsem', 'míg', 'mindamellett', 'pedig', 'viszont'];
+
     let originalWords = [];
     let missingIndices = [];
     let testSentences = [];
@@ -47,7 +49,7 @@
       const indexes = [];
 
       for (let i = 0; i < words.length; i += 2) {
-        if (words[i].match(/\w/)) indexes.push(i);
+        if (words[i].match(/\w/) && !ignoreWords.includes(words[i].toLowerCase())) indexes.push(i);
       }
 
       while (missingIndices.length < Math.min(5, indexes.length)) {
@@ -114,11 +116,14 @@
 
       while (testSentences.length < 5) {
         const randSentence = sentences[Math.floor(Math.random() * sentences.length)];
-        const words = randSentence.split(/(\s+)/).filter(w => w.trim().length > 0);
+        const words = randSentence.split(/(\s+)/).filter(w => w.trim().length > 0 && !ignoreWords.includes(w.trim().toLowerCase()));
+        if (words.length === 0) continue;
         const missingIndex = Math.floor(Math.random() * words.length);
         const correct = words[missingIndex];
-        words[missingIndex] = '_____';
-        const question = words.join(' ');
+        const displayWords = randSentence.split(/(\s+)/).map(w => {
+          return (w.trim() === correct) ? '_____' : w;
+        });
+        const question = displayWords.join('');
         testSentences.push({ question, correct });
       }
 
