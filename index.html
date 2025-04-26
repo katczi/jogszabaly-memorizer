@@ -17,26 +17,21 @@
     .result-correct { color: green; }
     .result-incorrect { color: red; }
   </style>
-</head>
-<body>
-  <h2>MemorySprint - Memorizálás az utolsó órákban is!</h2>
-  <label>Szöveg:</label><br>
-  <textarea id="inputText" placeholder="Illeszd be ide a jogszabály szövegét..."></textarea><br><br>
-
-  <button onclick="generateExercise()">Gyakorlás indítása</button>
-  <button onclick="startTest()">Teszt indítása</button>
-  <div id="exercise" style="margin-top: 1rem;"></div>
-  <div id="test" style="margin-top: 1rem;"></div>
-  <div id="result" style="margin-top: 1rem; font-weight: bold;"></div>
-
   <script>
     const ignoreWords = ['a', 'az', 'azt', 'és', 'hogy', 'mert', 'vagy', 'avagy', 'azonban', 'ám', 'csakhogy', 'de', 'ellenben', 'hanem', 'maga', 'mégis', 'mégsem', 'míg', 'mindamellett', 'pedig', 'viszont'];
+    const ignorePatterns = [/^\(?\d+\)?[\.]?$/, /^[§.,!?;:]$/];
+    const extraWords = ["alma","kutya","tavasz","iskola","jogszabály","rendelkezés","verseny","történelem","remény","szabadság","tanulás","alkotás","érzelem","szándék","összhang","város","ország","kétség","szükség","család","barátság","tanító","szülő","gyermek","tudomány","művészet","házasság","érték","kultúra","tudás","szellem","lélek","gondolat","hit","szó","közösség","tanulmány","fejlődés","képesség","akarat","szorgalom","teljesítmény","tapasztalat","jellem","szabály","bizalom","tisztelet","kedvesség","siker","kudarc"];
 
     let originalWords = [];
     let missingIndices = [];
     let testSentences = [];
     let correctAnswers = [];
     let userAnswers = [];
+
+    function isIgnored(word) {
+      const lower = word.toLowerCase();
+      return ignoreWords.includes(lower) || ignorePatterns.some(pattern => pattern.test(word));
+    }
 
     function generateExercise() {
       clearAll();
@@ -49,7 +44,7 @@
       const indexes = [];
 
       for (let i = 0; i < words.length; i += 2) {
-        if (words[i].match(/\w/) && !ignoreWords.includes(words[i].toLowerCase())) indexes.push(i);
+        if (words[i].match(/\w/) && !isIgnored(words[i])) indexes.push(i);
       }
 
       while (missingIndices.length < Math.min(5, indexes.length)) {
@@ -116,13 +111,11 @@
 
       while (testSentences.length < 5) {
         const randSentence = sentences[Math.floor(Math.random() * sentences.length)];
-        const words = randSentence.split(/(\s+)/).filter(w => w.trim().length > 0 && !ignoreWords.includes(w.trim().toLowerCase()));
+        const words = randSentence.split(/(\s+)/).filter(w => w.trim().length > 0 && !isIgnored(w.trim()));
         if (words.length === 0) continue;
         const missingIndex = Math.floor(Math.random() * words.length);
         const correct = words[missingIndex];
-        const displayWords = randSentence.split(/(\s+)/).map(w => {
-          return (w.trim() === correct) ? '_____' : w;
-        });
+        const displayWords = randSentence.split(/(\s+)/).map(w => (w.trim() === correct ? '_____' : w));
         const question = displayWords.join('');
         testSentences.push({ question, correct });
       }
@@ -138,12 +131,15 @@
         div.innerHTML = `<b>${index+1}. Kérdés:</b> ${item.question}`;
 
         const options = [item.correct];
+        const possibleWords = originalWords.map(w => w.trim()).filter(w => w && !isIgnored(w) && Math.abs(w.length - item.correct.length) <= 2);
+
         while (options.length < 4) {
-          const randomWord = originalWords[Math.floor(Math.random() * originalWords.length)].trim();
-          if (randomWord && !options.includes(randomWord) && randomWord.match(/^\w+$/)) {
-            options.push(randomWord);
+          let word = possibleWords.length > 0 ? possibleWords[Math.floor(Math.random() * possibleWords.length)] : extraWords[Math.floor(Math.random() * extraWords.length)];
+          if (!options.includes(word) && Math.abs(word.length - item.correct.length) <= 2) {
+            options.push(word);
           }
         }
+
         options.sort(() => Math.random() - 0.5);
 
         options.forEach(opt => {
