@@ -7,28 +7,70 @@
   <style>
     body { font-family: sans-serif; padding: 1rem; }
     textarea { width: 100%; height: 150px; margin-bottom: 1rem; }
-    button { padding: 10px 20px; font-size: 16px; }
+    input[type="number"] { width: 60px; margin-bottom: 1rem; }
+    button { padding: 10px 20px; font-size: 16px; margin-bottom: 1rem; }
+    .input-word { width: auto; min-width: 50px; padding: 4px; margin: 0 2px; }
+    .word-container { margin-top: 1rem; }
   </style>
 </head>
 <body>
   <h1>MemorySprint működik! 🎉</h1>
-  <p>Illeszd be ide a szöveget, majd indítsd a gyakorlást:</p>
+  <p>Illeszd be ide a szöveget, add meg hány szót szeretnél kihagyni, majd indítsd a gyakorlást:</p>
 
   <textarea id="inputText" placeholder="Ide írd vagy illeszd be a tanulandó szöveget..."></textarea><br>
 
+  <label for="missingCount">Hiányzó szavak száma:</label>
+  <input type="number" id="missingCount" min="1" value="5"><br>
+
   <button onclick="startPractice()">Gyakorlás indítása</button>
 
-  <div id="practiceArea" style="margin-top: 2rem;"></div>
+  <div id="practiceArea" class="word-container"></div>
 
   <script>
+    const ignoreWords = ['a', 'az', 'azt', 'és', 'hogy', 'mert', 'vagy', 'avagy', 'azonban', 'ám', 'csakhogy', 'de', 'ellenben', 'hanem', 'maga', 'mégis', 'mégsem', 'míg', 'mindamellett', 'pedig', 'viszont'];
+    const ignorePatterns = [/^\(?\d+\)?[\.]?$/, /^[§.,!?;:]$/];
+
+    function isIgnored(word) {
+      const lower = word.toLowerCase();
+      return ignoreWords.includes(lower) || ignorePatterns.some(pattern => pattern.test(word));
+    }
+
     function startPractice() {
       const text = document.getElementById('inputText').value.trim();
+      const count = parseInt(document.getElementById('missingCount').value);
       const output = document.getElementById('practiceArea');
+
       if (!text) {
         output.innerHTML = "<p style='color:red;'>Kérlek, adj meg egy szöveget!</p>";
         return;
       }
-      output.innerHTML = "<p style='color:green;'>Szuper! A szöveget megkaptuk. A feladatgenerálás hamarosan következik!</p>";
+
+      const words = text.split(/(\s+)/);
+      const indexes = [];
+
+      for (let i = 0; i < words.length; i += 2) {
+        if (words[i].match(/\w/) && !isIgnored(words[i])) indexes.push(i);
+      }
+
+      let missingIndices = [];
+      while (missingIndices.length < Math.min(count, indexes.length)) {
+        const rand = indexes[Math.floor(Math.random() * indexes.length)];
+        if (!missingIndices.includes(rand)) missingIndices.push(rand);
+      }
+
+      output.innerHTML = '';
+      words.forEach((word, i) => {
+        if (missingIndices.includes(i)) {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'input-word';
+          output.appendChild(input);
+        } else {
+          const span = document.createElement('span');
+          span.textContent = word;
+          output.appendChild(span);
+        }
+      });
     }
   </script>
 </body>
