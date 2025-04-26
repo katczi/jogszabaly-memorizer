@@ -17,6 +17,160 @@
   </style>
 </head>
 <body>
-<!-- tartalom beillesztve a Canvas dokumentumból, rövidítve -->
+  <h2>MemorySprint - Memorizálás az utolsó órákban is!</h2>
+  <label>Szöveg:</label><br>
+  <textarea id="inputText" placeholder="Illeszd be ide a jogszabály szövegét..."></textarea><br><br>
+
+  <button onclick="generateExercise()">Gyakorlás indítása</button>
+  <button onclick="startTest()">Teszt indítása</button>
+  <div id="exercise" style="margin-top: 1rem;"></div>
+  <div id="test" style="margin-top: 1rem;"></div>
+  <div id="result" style="margin-top: 1rem; font-weight: bold;"></div>
+
+  <script>
+    let originalWords = [];
+    let missingIndices = [];
+    let testSentences = [];
+    let score = 0;
+
+    function generateExercise() {
+      clearAll();
+      const text = document.getElementById('inputText').value.trim();
+      if (!text) return;
+
+      const words = text.split(/(\s+)/);
+      originalWords = [...words];
+      missingIndices = [];
+      const indexes = [];
+
+      for (let i = 0; i < words.length; i += 2) {
+        if (words[i].match(/\w/)) indexes.push(i);
+      }
+
+      while (missingIndices.length < Math.min(5, indexes.length)) {
+        const rand = indexes[Math.floor(Math.random() * indexes.length)];
+        if (!missingIndices.includes(rand)) missingIndices.push(rand);
+      }
+
+      const container = document.getElementById('exercise');
+      container.innerHTML = '';
+
+      words.forEach((word, i) => {
+        if (missingIndices.includes(i)) {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'input-word';
+          input.setAttribute('data-index', i);
+          container.appendChild(input);
+        } else {
+          const span = document.createElement('span');
+          span.textContent = word;
+          container.appendChild(span);
+        }
+      });
+
+      const checkBtn = document.createElement('button');
+      checkBtn.innerText = 'Ellenőrzés';
+      checkBtn.style.marginTop = '1rem';
+      checkBtn.onclick = checkAnswers;
+      container.appendChild(document.createElement('br'));
+      container.appendChild(checkBtn);
+    }
+
+    function checkAnswers() {
+      const container = document.getElementById('exercise');
+      const inputs = container.querySelectorAll('input.input-word');
+      const list = document.createElement('ul');
+      list.className = 'answer-list';
+      inputs.forEach(input => {
+        const index = parseInt(input.getAttribute('data-index'));
+        const correct = originalWords[index];
+        const li = document.createElement('li');
+        li.textContent = `Helyes szó: ${correct}`;
+        list.appendChild(li);
+        if (input.value.trim() === correct) {
+          input.classList.remove('incorrect');
+          input.classList.add('correct');
+        } else {
+          input.classList.remove('correct');
+          input.classList.add('incorrect');
+        }
+      });
+      container.appendChild(list);
+    }
+
+    function startTest() {
+      clearAll();
+      const text = document.getElementById('inputText').value.trim();
+      if (!text) return;
+
+      const sentences = text.split(/[.!?]\s*/).filter(s => s.length > 0);
+      testSentences = [];
+      while (testSentences.length < Math.min(5, sentences.length)) {
+        const rand = sentences[Math.floor(Math.random() * sentences.length)];
+        if (!testSentences.includes(rand)) testSentences.push(rand);
+      }
+
+      score = 0;
+      runMultipleChoiceTest();
+    }
+
+    function runMultipleChoiceTest() {
+      const container = document.getElementById('test');
+      container.innerHTML = '';
+      testSentences.forEach((sentence, q) => {
+        const words = sentence.split(/(\s+)/).filter(w => w.trim().length > 0);
+        const missingIndex = Math.floor(Math.random() * words.length);
+        const correct = words[missingIndex];
+        words[missingIndex] = '_____';
+        const question = words.join(' ');
+
+        const div = document.createElement('div');
+        div.innerHTML = `<b>${q+1}. Kérdés:</b> ${question}`;
+
+        const options = [correct];
+        while (options.length < 4) {
+          const randomWord = originalWords[Math.floor(Math.random() * originalWords.length)].trim();
+          if (randomWord && !options.includes(randomWord) && randomWord.match(/^\w+$/)) {
+            options.push(randomWord);
+          }
+        }
+        options.sort(() => Math.random() - 0.5);
+
+        options.forEach(opt => {
+          const btn = document.createElement('button');
+          btn.className = 'option-btn';
+          btn.textContent = opt;
+          btn.onclick = () => {
+            if (opt === correct) score++;
+            if (q === testSentences.length - 1) {
+              showResult(score, testSentences.length);
+            }
+            btn.disabled = true;
+          };
+          div.appendChild(btn);
+        });
+
+        container.appendChild(div);
+      });
+    }
+
+    function showResult(correct, total) {
+      const percent = Math.round((correct / total) * 100);
+      let msg = '';
+      if (percent >= 90) msg = 'Kiváló!';
+      else if (percent >= 70) msg = 'Nagyon jó, kis gyakorlással hibátlan lesz!';
+      else if (percent >= 50) msg = 'Még gyakorolj egy kicsit.';
+      else msg = 'Ne add fel, menni fog!';
+      document.getElementById('result').innerHTML = `Pontszám: ${correct}/${total} (${percent}%)<br>${msg}`;
+      document.getElementById('test').innerHTML = '';
+    }
+
+    function clearAll() {
+      document.getElementById('exercise').innerHTML = '';
+      document.getElementById('test').innerHTML = '';
+      document.getElementById('result').innerHTML = '';
+    }
+  </script>
 </body>
 </html>
