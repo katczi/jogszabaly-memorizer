@@ -3,195 +3,104 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MemorySprint</title>
+  <title>MemorySprint - Gyakorlás</title>
   <style>
     body { font-family: sans-serif; padding: 1rem; }
-    textarea, input[type="number"] { width: 100%; margin-bottom: 1rem; }
-    button { padding: 10px; margin: 5px; }
+    textarea { width: 100%; height: 150px; margin-bottom: 1rem; }
+    input[type="number"] { width: 80px; margin-bottom: 1rem; }
+    button { padding: 10px; margin: 5px 0; }
     .input-word { width: auto; min-width: 60px; padding: 4px; margin: 0 2px; }
-    .question { margin-top: 1rem; }
-    .answer-list { margin-top: 1rem; }
     .correct { background-color: #c8e6c9; }
     .incorrect { background-color: #ffcdd2; }
+    .answer-list { margin-top: 1rem; }
   </style>
 </head>
 <body>
-  <h1>MemorySprint</h1>
+  <h1>MemorySprint - Gyakorlás</h1>
 
-  <textarea id="inputText" placeholder="Illeszd be ide a szöveget..."></textarea>
-  <input type="number" id="missingCount" placeholder="Hiányzó szavak száma" value="5" min="1">
-  <div>
-    <button onclick="startPractice()">Gyakorlás indítása</button>
-    <button onclick="startTest()">Teszt indítása</button>
-    <button onclick="resetAll()">Vissza a főmenübe</button>
-  </div>
+  <textarea id="inputText" placeholder="Ide írd vagy illeszd be a tanulandó szöveget..."></textarea>
+  <br>
+  <label>Hiányzó szavak száma:</label>
+  <input type="number" id="missingCount" value="5" min="1">
+  <br>
+  <button onclick="startPractice()">Gyakorlás indítása</button>
 
   <div id="practiceArea"></div>
-  <div id="testArea"></div>
 
-<script>
-const hungarianWords = ['tanulás', 'memória', 'szabály', 'vizsga', 'tudás', 'jogszabály', 'gyakorlat', 'képzés', 'szorgalom', 'eredmény', 'feladat', 'készség', 'fejlődés', 'oktatás'];
+  <script>
+    const ignoreWords = ['a', 'az', 'azt', 'és', 'hogy', 'mert', 'vagy', 'avagy', 'azonban', 'ám', 'csakhogy', 'de', 'ellenben', 'hanem', 'maga', 'mégis', 'mégsem', 'míg', 'mindamellett', 'pedig', 'viszont'];
 
-let originalWords = [];
-let missingIndices = [];
-let testQuestions = [];
-let userAnswers = [];
+    function startPractice() {
+      const text = document.getElementById('inputText').value.trim();
+      const missingCount = parseInt(document.getElementById('missingCount').value);
+      const output = document.getElementById('practiceArea');
+      output.innerHTML = '';
 
-function resetAll() {
-  document.getElementById('practiceArea').innerHTML = "";
-  document.getElementById('testArea').innerHTML = "";
-}
-
-function startPractice() {
-  resetAll();
-  const text = document.getElementById('inputText').value.trim();
-  const count = parseInt(document.getElementById('missingCount').value);
-  const output = document.getElementById('practiceArea');
-
-  if (!text) {
-    output.innerHTML = "<p style='color:red;'>Kérlek, adj meg szöveget!</p>";
-    return;
-  }
-
-  const words = text.split(/(\s+)/);
-  originalWords = [...words];
-  const indexes = [];
-
-  for (let i = 0; i < words.length; i += 2) {
-    if (words[i].match(/\w/) && !words[i].match(/^\(\d+\)$/)) indexes.push(i);
-  }
-
-  missingIndices = [];
-  while (missingIndices.length < Math.min(count, indexes.length)) {
-    const rand = indexes[Math.floor(Math.random() * indexes.length)];
-    if (!missingIndices.includes(rand)) missingIndices.push(rand);
-  }
-
-  output.innerHTML = '';
-  words.forEach((word, i) => {
-    if (missingIndices.includes(i)) {
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.className = 'input-word';
-      input.setAttribute('data-index', i);
-      output.appendChild(input);
-    } else {
-      const span = document.createElement('span');
-      span.textContent = word;
-      output.appendChild(span);
-    }
-  });
-
-  const checkBtn = document.createElement('button');
-  checkBtn.innerText = 'Ellenőrzés';
-  checkBtn.onclick = checkAnswers;
-  output.appendChild(document.createElement('br'));
-  output.appendChild(checkBtn);
-}
-
-function checkAnswers() {
-  const output = document.getElementById('practiceArea');
-  const inputs = output.querySelectorAll('input.input-word');
-  const list = document.createElement('ul');
-  list.className = 'answer-list';
-
-  inputs.forEach(input => {
-    const index = parseInt(input.getAttribute('data-index'));
-    const correct = originalWords[index];
-    const li = document.createElement('li');
-    li.textContent = `Helyes szó: ${correct}`;
-    list.appendChild(li);
-
-    if (input.value.trim() === correct) {
-      input.classList.remove('incorrect');
-      input.classList.add('correct');
-    } else {
-      input.classList.remove('correct');
-      input.classList.add('incorrect');
-    }
-  });
-
-  output.appendChild(list);
-}
-
-function startTest() {
-  resetAll();
-  const text = document.getElementById('inputText').value.trim();
-  const sentences = text.match(/[^.!?]+[.!?]/g) || [];
-  testQuestions = [];
-  userAnswers = [];
-
-  while (testQuestions.length < 5) {
-    const sent = sentences[Math.floor(Math.random() * sentences.length)] || text;
-    const words = sent.split(/\s+/).filter(w => w.length > 2 && !w.match(/^\(\d+\)$/));
-    if (words.length === 0) continue;
-    const missingWord = words[Math.floor(Math.random() * words.length)];
-    const question = sent.replace(missingWord, "_____");
-    testQuestions.push({question, correct: missingWord});
-  }
-
-  renderTest();
-}
-
-function renderTest() {
-  const area = document.getElementById('testArea');
-  area.innerHTML = "";
-  testQuestions.forEach((q, idx) => {
-    const div = document.createElement('div');
-    div.className = "question";
-    div.innerHTML = `<b>${idx+1}.</b> ${q.question}<br>`;
-
-    const options = [q.correct];
-    while (options.length < 4) {
-      const randomWord = hungarianWords[Math.floor(Math.random() * hungarianWords.length)];
-      if (!options.includes(randomWord) && Math.abs(randomWord.length - q.correct.length) <= 2) {
-        options.push(randomWord);
+      if (!text) {
+        output.innerHTML = '<p style="color:red;">Kérlek, adj meg egy szöveget!</p>';
+        return;
       }
+
+      const words = text.split(/(\s+)/);
+      const indexes = [];
+      for (let i = 0; i < words.length; i += 2) {
+        const word = words[i].toLowerCase().replace(/[.,!?()]/g, '');
+        if (word.length > 2 && !ignoreWords.includes(word) && !/^\d+$/.test(word)) {
+          indexes.push(i);
+        }
+      }
+
+      const missingIndices = [];
+      while (missingIndices.length < Math.min(missingCount, indexes.length)) {
+        const rand = indexes[Math.floor(Math.random() * indexes.length)];
+        if (!missingIndices.includes(rand)) missingIndices.push(rand);
+      }
+
+      words.forEach((word, i) => {
+        if (missingIndices.includes(i)) {
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.className = 'input-word';
+          input.setAttribute('data-index', i);
+          output.appendChild(input);
+        } else {
+          const span = document.createElement('span');
+          span.textContent = word;
+          output.appendChild(span);
+        }
+      });
+
+      const checkBtn = document.createElement('button');
+      checkBtn.innerText = 'Ellenőrzés';
+      checkBtn.onclick = () => checkAnswers(words, missingIndices);
+      output.appendChild(document.createElement('br'));
+      output.appendChild(checkBtn);
     }
-    options.sort(() => Math.random() - 0.5);
 
-    options.forEach(opt => {
-      const btn = document.createElement('button');
-      btn.textContent = opt;
-      btn.onclick = () => {
-        userAnswers[idx] = opt;
-        btn.parentNode.querySelectorAll('button').forEach(b => b.disabled = true);
-      };
-      div.appendChild(btn);
-    });
-    area.appendChild(div);
-  });
+    function checkAnswers(words, missingIndices) {
+      const output = document.getElementById('practiceArea');
+      const inputs = output.querySelectorAll('input.input-word');
+      const list = document.createElement('ul');
+      list.className = 'answer-list';
 
-  const checkBtn = document.createElement('button');
-  checkBtn.textContent = "Teszt ellenőrzése";
-  checkBtn.onclick = checkTest;
-  area.appendChild(checkBtn);
-}
+      inputs.forEach(input => {
+        const index = parseInt(input.getAttribute('data-index'));
+        const correct = words[index];
+        const li = document.createElement('li');
+        li.textContent = `Helyes szó: ${correct}`;
+        list.appendChild(li);
 
-function checkTest() {
-  const area = document.getElementById('testArea');
-  let correctCount = 0;
-  const list = document.createElement('ul');
-  list.className = 'answer-list';
+        if (input.value.trim() === correct) {
+          input.classList.add('correct');
+          input.classList.remove('incorrect');
+        } else {
+          input.classList.add('incorrect');
+          input.classList.remove('correct');
+        }
+      });
 
-  testQuestions.forEach((q, idx) => {
-    const li = document.createElement('li');
-    if (userAnswers[idx] === q.correct) {
-      li.textContent = `✅ ${idx+1}. helyes: ${q.correct}`;
-      li.className = 'correct';
-      correctCount++;
-    } else {
-      li.textContent = `❌ ${idx+1}. helytelen, helyes: ${q.correct}`;
-      li.className = 'incorrect';
+      output.appendChild(list);
     }
-    list.appendChild(li);
-  });
-
-  const score = Math.round((correctCount / testQuestions.length) * 100);
-  area.innerHTML = `<h3>Eredmény: ${correctCount}/${testQuestions.length} (${score}%)</h3>`;
-  area.appendChild(list);
-}
-</script>
-
+  </script>
 </body>
 </html>
