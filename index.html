@@ -3,16 +3,78 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MemorySprint - Gyakorlás</title>
+  <title>MemorySprint - Szépített Gyakorlás</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <style>
-    body { font-family: sans-serif; padding: 1rem; }
-    textarea { width: 100%; height: 150px; margin-bottom: 1rem; }
-    input[type="number"] { width: 80px; margin-bottom: 1rem; }
-    button { padding: 10px; margin: 5px 0; }
-    .input-word { width: auto; min-width: 60px; padding: 4px; margin: 0 2px; }
-    .correct { background-color: #c8e6c9; }
-    .incorrect { background-color: #ffcdd2; }
-    .answer-list { margin-top: 1rem; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    input[type="number"] {
+      width: 100px;
+      padding: 5px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px 5px 20px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-size: 1rem;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .input-word {
+      width: auto;
+      min-width: 60px;
+      padding: 4px;
+      margin: 0 2px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      font-size: 1rem;
+    }
+    .correct {
+      background-color: #c8e6c9;
+    }
+    .incorrect {
+      background-color: #ffcdd2;
+    }
+    .answer-list {
+      margin-top: 1rem;
+    }
+    @media (max-width: 600px) {
+      body {
+        padding: 1rem;
+      }
+      button {
+        width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
